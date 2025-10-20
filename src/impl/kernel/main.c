@@ -68,13 +68,11 @@ void keyboard_poll(void) {
         if (c) {
             if (c == '\n' || scancode == 28) { // Enter pressed
                 input_buffer[input_len] = '\0';
-                print_str("\nYou typed: ");
-                print_str(input_buffer);
                 print_str("\n> ");
 
                 // Use our custom compare
-                if (str_equals(input_buffer, "ansh")) {
-                    print_str("U typed Ansh\n> ");
+                if (str_equals(input_buffer, "help")) {
+                    print_str("game - starts the game menu\n> ");
                 }
 
                 input_len = 0; // reset for next input
@@ -96,14 +94,20 @@ void delay_ms(uint32_t ms) {
     }
 }
 
+void game() {
+    
+}
+
 void kernel_main() {
     print_clear();
     print_set_color(PRINT_COLOR_YELLOW, PRINT_COLOR_BLACK);
     print_str("Welcome to Beacon OS 64-bit\n");
+    print_set_color(PRINT_COLOR_CYAN, PRINT_COLOR_BLACK);
+    print_str("Type help for a list of commands");
     idt_init();
     pic_init();
     __asm__ volatile ("sti");
-    print_str("Press any key...\n> ");
+    print_str("\n> ");
     while (1) {
         keyboard_poll();
         delay_ms(100);
