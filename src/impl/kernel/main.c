@@ -151,27 +151,31 @@ void keyboard_poll(void) {
     static char input_buffer[INPUT_BUFFER_SIZE];
     static size_t input_len = 0;
     uint8_t scancode;
+
     if (buffer_get(&scancode)) {
         char c = scancode_to_ascii(scancode);
         if (c) {
-            if (c == '\n' || scancode == 28) {
+            if (c == '\n' || scancode == 28) { // Enter
                 input_buffer[input_len] = '\0';
                 print_str("\n> ");
                 if (str_equals(input_buffer, "help")) {
                     print_str("game - starts the game menu\n");
-                    print_str("print(Whatever u wanna print inside quotes)\n>");
-                } else if(str_equals(input_buffer, "game")){
+                    print_str("print <text> - prints the text\n>");
+                } else if (str_equals(input_buffer, "game")) {
                     game();
-                }
-                else if (starts_with(input_buffer, "print ")) {
+                } else if (starts_with(input_buffer, "print ")) {
                     handle_print_command(input_buffer);
-                    input_len = 0;
                 }
-
-
-
+                input_len = 0; // reset buffer after command
             } 
-            else if (input_len < INPUT_BUFFER_SIZE - 1) {
+            else if (c == '\b') { // Backspace
+                if (input_len > 0) {
+                    input_len--; 
+                    // Move cursor back, print space to erase, move back again
+                    print_str("\b \b");
+                }
+            } 
+            else if (input_len < INPUT_BUFFER_SIZE - 1) { // Normal character
                 input_buffer[input_len++] = c;
                 char str[2] = {c, '\0'};
                 print_str(str);
@@ -179,6 +183,7 @@ void keyboard_poll(void) {
         }
     }
 }
+
 
 
 
