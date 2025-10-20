@@ -1,7 +1,93 @@
 #include "print.h"
+#include "idt.h"
+#include <stdint.h>
+#include "../../intf/keyboard.h"
+
+#define INPUT_BUFFER_SIZE 128
+
+extern volatile uint8_t key_buffer[16];
+extern volatile size_t buffer_head;
+extern volatile size_t buffer_tail;
+extern void pic_init(void);
+
+static int shift = 0;
+volatile uint8_t key_states[128] = {0};
+
+void buffer_add(uint8_t scancode) {
+    size_t next_head = (buffer_head + 1) % 16;
+    if (next_head != buffer_tail) {
+        key_buffer[buffer_head] = scancode;
+        buffer_head = next_head;
+    }
+}
+
+int buffer_get(uint8_t *scancode) {
+    if (buffer_head == buffer_tail) return 0;
+    *scancode = key_buffer[buffer_tail];
+    buffer_tail = (buffer_tail + 1) % 16;
+    return 1;
+}
+
+char scancode_to_ascii(uint8_t scancode) {
+    static const char map[128] = {
+        0, 27, '1','2','3','4','5','6','7','8','9','0','-','=','\b',
+        '\t','q','w','e','r','t','y','u','i','o','p','[',']','\n', 0,
+        'a','s','d','f','g','h','j','k','l',';','\'','`', 0,'\\',
+        'z','x','c','v','b','n','m',',','.','/', 0,'*', 0,' ', 0
+    };
+
+    if (scancode == 0x2A || scancode == 0x36) { shift = 1; return 0; }
+    if (scancode == (0x2A | 0x80) || scancode == (0x36 | 0x80)) { shift = 0; return 0; }
+    if (scancode & 0x80) return 0;
+
+    char c = map[scancode];
+    if (shift && c >= 'a' && c <= 'z') c -= 32;
+    return c;
+}
+
+// ----------------------------------------------------------------
+// Poll for key press and print it
+// ----------------------------------------------------------------
+void keyboard_poll(void) {
+    static char input_buffer[INPUT_BUFFER_SIZE];
+    static size_t input_len = 0;
+
+    uint8_t scancode;
+    if (buffer_get(&scancode)) {
+        char c = scancode_to_ascii(scancode);
+        if (c) {
+            if (c == '\n' || scancode == 28) { // Enter pressed
+                input_buffer[input_len] = '\0';
+                print_str("\nYou typed: ");
+                print_str(input_buffer);
+                print_str("\n> ");
+                input_len = 0; // reset for next input
+            } else if (input_len < INPUT_BUFFER_SIZE - 1) {
+                input_buffer[input_len++] = c;
+                char str[2] = {c, '\0'};
+                print_str(str);
+            }
+        }
+    }
+}
+
+// Simple delay loop (approximate)
+void delay_ms(uint32_t ms) {
+    for (volatile uint32_t i = 0; i < ms * 100000; i++) {
+        __asm__ volatile ("nop");
+    }
+}
 
 void kernel_main() {
     print_clear();
     print_set_color(PRINT_COLOR_YELLOW, PRINT_COLOR_BLACK);
     print_str("Welcome to Beacon OS 64-bit\n");
+    idt_init();
+    pic_init();
+    __asm__ volatile ("sti");
+    print_str("Press any key...\n> ");
+    while (1) {
+        keyboard_poll();
+        delay_ms(100);
+    }
 }
