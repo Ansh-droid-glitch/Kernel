@@ -128,6 +128,24 @@ void game() {
         delay_ms(100);
     }
 }
+int starts_with(const char *str, const char *prefix) {
+    while (*prefix) {
+        if (*str != *prefix) return 0;
+        str++;
+        prefix++;
+    }
+    return 1;
+}
+
+void handle_print_command(const char *input) {
+    const char *text = input + 6; // skip "print "
+    if (*text == '\0') return; // nothing to print
+    print_str(text);
+    print_str("\n> ");
+}
+
+
+
 
 void keyboard_poll(void) {
     static char input_buffer[INPUT_BUFFER_SIZE];
@@ -140,11 +158,18 @@ void keyboard_poll(void) {
                 input_buffer[input_len] = '\0';
                 print_str("\n> ");
                 if (str_equals(input_buffer, "help")) {
-                    print_str("game - starts the game menu\n> ");
+                    print_str("game - starts the game menu\n");
+                    print_str("print(Whatever u wanna print inside quotes)\n>");
                 } else if(str_equals(input_buffer, "game")){
                     game();
                 }
-                input_len = 0;
+                else if (starts_with(input_buffer, "print ")) {
+                    handle_print_command(input_buffer);
+                    input_len = 0;
+                }
+
+
+
             } 
             else if (input_len < INPUT_BUFFER_SIZE - 1) {
                 input_buffer[input_len++] = c;
