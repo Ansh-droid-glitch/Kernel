@@ -154,6 +154,7 @@ void keyboard_poll(void) {
 
     if (buffer_get(&scancode)) {
         char c = scancode_to_ascii(scancode);
+
         if (c) {
             if (c == '\n' || scancode == 28) { // Enter
                 input_buffer[input_len] = '\0';
@@ -166,15 +167,15 @@ void keyboard_poll(void) {
                 } else if (starts_with(input_buffer, "print ")) {
                     handle_print_command(input_buffer);
                 }
-                input_len = 0; // reset buffer after command
+                input_len = 0;
             } 
-            else if (c == '\b') { // Backspace
+            else if (scancode == 0x0E) { // Backspace
                 if (input_len > 0) {
-                    input_len--; 
-                    // Move cursor back, print space to erase, move back again
-                    print_str("\b \b");
+                input_len--;
+                print_backspace(); // <-- clean!
                 }
-            } 
+            }
+
             else if (input_len < INPUT_BUFFER_SIZE - 1) { // Normal character
                 input_buffer[input_len++] = c;
                 char str[2] = {c, '\0'};
@@ -183,6 +184,7 @@ void keyboard_poll(void) {
         }
     }
 }
+
 
 
 

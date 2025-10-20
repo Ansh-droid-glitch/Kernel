@@ -20,11 +20,12 @@
 #define PRINT_COLOR_LIGHT_MAGENTA 13
 #define PRINT_COLOR_LIGHT_BROWN 14
 #define PRINT_COLOR_WHITE 15
-#define PRINT_COLOR_YELLOW 14  // or define properly if you want yellow
+#define PRINT_COLOR_YELLOW 14
 
 void print_clear();
 void print_char(char character);
-void print_str(const char* string);   // ✅ changed to match print.c
+void print_str(const char* string);
 void print_set_color(uint8_t foreground, uint8_t background);
+void print_backspace();  // ← new function
 
 #endif

@@ -14,21 +14,21 @@ size_t row = 0;
 uint8_t color = PRINT_COLOR_WHITE | (PRINT_COLOR_BLACK << 4);
 
 void clear_row(size_t row) {
-    struct Char empty = (struct Char) {
-        .character = ' ',   // ✅ fixed (single char + proper designated initializer)
+    struct Char empty = {
+        .character = ' ',
         .color = color,
     };
-
-    // ✅ fixed loop syntax: use semicolon, not comma
-    for (size_t col = 0; col < NUM_COLS; col++) {
-        buffer[col + NUM_COLS * row] = empty;
+    for (size_t c = 0; c < NUM_COLS; c++) {
+        buffer[c + NUM_COLS * row] = empty;
     }
 }
 
 void print_clear() {
-    for (size_t i = 0; i < NUM_ROWS; i++) {
-        clear_row(i);
+    for (size_t r = 0; r < NUM_ROWS; r++) {
+        clear_row(r);
     }
+    col = 0;
+    row = 0;
 }
 
 void print_newline() {
@@ -40,12 +40,10 @@ void print_newline() {
 
     for (size_t r = 1; r < NUM_ROWS; r++) {
         for (size_t c = 0; c < NUM_COLS; c++) {
-            struct Char character = buffer[c + NUM_COLS * r];
-            buffer[c + NUM_COLS * (r - 1)] = character;
+            buffer[c + NUM_COLS * (r - 1)] = buffer[c + NUM_COLS * r];
         }
     }
 
-    // ✅ fix: was NUM_COLS - 1 (wrong), should clear last row
     clear_row(NUM_ROWS - 1);
 }
 
@@ -55,12 +53,11 @@ void print_char(char character) {
         return;
     }
 
-    // ✅ fix: should wrap when col == NUM_COLS
     if (col >= NUM_COLS) {
         print_newline();
     }
 
-    buffer[col + NUM_COLS * row] = (struct Char) {
+    buffer[col + NUM_COLS * row] = (struct Char){
         .character = (uint8_t) character,
         .color = color,
     };
@@ -70,14 +67,27 @@ void print_char(char character) {
 
 void print_str(const char* str) {
     for (size_t i = 0; ; i++) {
-        char character = str[i];
-        if (character == '\0') {
-            return;
-        }
-        print_char(character);
+        char c = str[i];
+        if (c == '\0') return;
+        print_char(c);
     }
 }
 
 void print_set_color(uint8_t foreground, uint8_t background) {
-    color = foreground | (background << 4);  // ✅ fix: use OR instead of +
+    color = foreground | (background << 4);
+}
+
+// -------------------- NEW --------------------
+void print_backspace() {
+    if (col == 0 && row == 0) return; // nothing to delete
+
+    if (col == 0) {
+        row--;
+        col = NUM_COLS - 1;
+    } else {
+        col--;
+    }
+
+    buffer[col + NUM_COLS * row].character = ' ';
+    buffer[col + NUM_COLS * row].color = color;
 }
