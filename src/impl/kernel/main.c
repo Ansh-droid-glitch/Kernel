@@ -48,6 +48,16 @@ char scancode_to_ascii(uint8_t scancode) {
 // ----------------------------------------------------------------
 // Poll for key press and print it
 // ----------------------------------------------------------------
+// Manual string compare function
+int str_equals(const char *a, const char *b) {
+    while (*a && *b) {
+        if (*a != *b) return 0;
+        a++;
+        b++;
+    }
+    return (*a == *b); // both ended together
+}
+
 void keyboard_poll(void) {
     static char input_buffer[INPUT_BUFFER_SIZE];
     static size_t input_len = 0;
@@ -61,8 +71,15 @@ void keyboard_poll(void) {
                 print_str("\nYou typed: ");
                 print_str(input_buffer);
                 print_str("\n> ");
+
+                // Use our custom compare
+                if (str_equals(input_buffer, "ansh")) {
+                    print_str("U typed Ansh\n> ");
+                }
+
                 input_len = 0; // reset for next input
-            } else if (input_len < INPUT_BUFFER_SIZE - 1) {
+            } 
+            else if (input_len < INPUT_BUFFER_SIZE - 1) {
                 input_buffer[input_len++] = c;
                 char str[2] = {c, '\0'};
                 print_str(str);
@@ -70,6 +87,7 @@ void keyboard_poll(void) {
         }
     }
 }
+
 
 // Simple delay loop (approximate)
 void delay_ms(uint32_t ms) {
