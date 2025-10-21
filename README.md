@@ -10,6 +10,9 @@ Steps to build Lumen:
 
 If you are using docker like me then the steps are different
 
+Startup Screen:
 ![After Booting Screen](images/boot.png)
 
+
+The random nukber guessing game:
 ![Games Screen](images/game.png)
