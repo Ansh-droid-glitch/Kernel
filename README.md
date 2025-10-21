@@ -11,6 +11,7 @@ Steps to build Lumen:
 If you are using docker like me then the steps are different
 
 Startup Screen:
+
 ![After Booting Screen](images/boot.png)
 
 
