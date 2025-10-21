@@ -221,11 +221,11 @@ void keyboard_poll(void) {
 void kernel_main() {
     print_clear();
     print_set_color(PRINT_COLOR_YELLOW, PRINT_COLOR_BLACK);
-    print_str("Welcome to Beacon OS 64-bit\n");
+    print_str("Welcome to Lumen OS 64-bit\n");
     print_set_color(PRINT_COLOR_CYAN, PRINT_COLOR_BLACK);
     print_str("Type help for a list of commands");
     fs_init();
-    fs_write("/README.txt","Welcome to BeaconOS FS. Try: ls /, cat /README.txt",54);
+    fs_write("/README.txt","Welcome to LumenOS FS. Try: ls /, cat /README.txt",54);
     idt_init();
     pic_init();
     __asm__ volatile("sti");
