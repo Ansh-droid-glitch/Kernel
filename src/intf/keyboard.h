@@ -17,6 +17,7 @@ void buffer_add(uint8_t scancode);
 int buffer_get(uint8_t *scancode);
 char scancode_to_ascii(uint8_t scancode);
 void keyboard_poll(void);
-void keyboard_poll_for_game(uint32_t randum);
+void keyboard_poll_for_game(uint32_t randum, int *exit_game);
+
 
 #endif
