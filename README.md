@@ -19,5 +19,5 @@ Startup Screen:
 ![After Booting Screen](images/boot.png)
 
 
-The random nukber guessing game:
+The random number guessing game:
 ![Games Screen](images/game.png)
