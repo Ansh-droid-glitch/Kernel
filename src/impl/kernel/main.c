@@ -50,18 +50,15 @@ char scancode_to_ascii(uint8_t scancode) {
     if (scancode & 0x80) return 0;
 
     char c = shift ? scancode_table_shift[scancode] : scancode_table[scancode];
-
-    if ((caps_lock && c >= 'a' && c <= 'z') || (caps_lock && !shift && c >= 'A' && c <= 'Z')) 
+    if ((caps_lock && c >= 'a' && c <= 'z') || (caps_lock && !shift && c >= 'A' && c <= 'Z'))
         c ^= 32;
-
     return c;
 }
 
 int str_equals(const char *a, const char *b) {
     while (*a && *b) {
         if (*a != *b) return 0;
-        a++;
-        b++;
+        a++; b++;
     }
     return (*a == *b);
 }
@@ -75,15 +72,8 @@ int starts_with(const char *str, const char *prefix) {
 }
 
 static uint32_t seed = 123456789;
-
-uint32_t rand32(void) {
-    seed = seed * 1664525 + 1013904223;
-    return seed;
-}
-
-uint32_t rand_range(uint32_t min, uint32_t max) {
-    return (rand32() % (max - min + 1)) + min;
-}
+uint32_t rand32(void) { seed = seed * 1664525 + 1013904223; return seed; }
+uint32_t rand_range(uint32_t min, uint32_t max) { return (rand32() % (max - min + 1)) + min; }
 
 int str_to_int(const char *str) {
     int result = 0;
@@ -96,14 +86,12 @@ int str_to_int(const char *str) {
     return result;
 }
 
-// ----------------- Delay -----------------
 void delay_ms(uint32_t ms) {
     for (volatile uint32_t i = 0; i < ms * 100000; i++) __asm__ volatile ("nop");
 }
 
-
 // ----------------- Game -----------------
-void keyboard_poll_for_game(uint32_t randum, int *exit_game) {
+void keyboard_poll_for_game(uint32_t randnum, int *exit_game) {
     static char input_buffer[INPUT_BUFFER_SIZE];
     static size_t input_len = 0;
     uint8_t scancode;
@@ -112,14 +100,12 @@ void keyboard_poll_for_game(uint32_t randum, int *exit_game) {
         char c = scancode_to_ascii(scancode);
         if (!c) continue;
 
-        // Backspace
         if (scancode == 0x0E && input_len > 0) {
             input_len--;
             print_backspace();
             continue;
         }
 
-        // Exit game if user types 'q' or 'Q'
         if (c == 'q' || c == 'Q') {
             *exit_game = 1;
             print_str("\nExiting game...\n> ");
@@ -127,11 +113,10 @@ void keyboard_poll_for_game(uint32_t randum, int *exit_game) {
             return;
         }
 
-        // Enter pressed
         if (c == '\n') {
             input_buffer[input_len] = '\0';
             int guess = str_to_int(input_buffer);
-            if (randum == guess) {
+            if (randnum == guess) {
                 print_str("You got it right!\n> ");
                 *exit_game = 1;
             } else {
@@ -153,7 +138,7 @@ void game() {
     print_str("Type 'q' to quit the game\n");
 
     uint32_t randnum = rand_range(1, 10);
-    print_str("Guess a number from 1 to 10: \n");
+    print_str("Guess a number from 1 to 10:\n");
 
     int exit_game = 0;
     while (!exit_game) {
@@ -169,6 +154,25 @@ void handle_print_command(const char *input) {
         print_str(text);
         print_str("\n> ");
     }
+}
+
+// color command — supports color names like: red, blue, green
+void handle_color_command(const char *input) {
+    const char *color = input + 6;
+    while (*color == ' ') color++;
+
+    if (str_equals(color, "red"))
+        print_set_color(PRINT_COLOR_RED, PRINT_COLOR_BLACK);
+    else if (str_equals(color, "blue"))
+        print_set_color(PRINT_COLOR_BLUE, PRINT_COLOR_BLACK);
+    else if (str_equals(color, "green"))
+        print_set_color(PRINT_COLOR_GREEN, PRINT_COLOR_BLACK);
+    else if (str_equals(color, "cyan"))
+        print_set_color(PRINT_COLOR_CYAN, PRINT_COLOR_BLACK);
+    else if (str_equals(color, "yellow"))
+        print_set_color(PRINT_COLOR_YELLOW, PRINT_COLOR_BLACK);
+    else
+        print_str("Unknown color\n");
 }
 
 static void ls_print_cb(const char *name, fs_node_type_t type, void *user) {
@@ -200,7 +204,7 @@ static void cmd_cat(const char *path) {
         int n = fs_read(path, buf, sizeof(buf)-1);
         if (n < 0) print_str("cat: failed\n");
         else {
-            buf[n]='\0';
+            buf[n] = '\0';
             print_str(buf);
             print_str("\n");
         }
@@ -229,7 +233,6 @@ void keyboard_poll(void) {
         char c = scancode_to_ascii(scancode);
         if (!c) continue;
 
-        // Backspace
         if (scancode == 0x0E && input_len > 0) {
             input_len--;
             print_backspace();
@@ -237,39 +240,40 @@ void keyboard_poll(void) {
         }
 
         if (c == '\n') {
-            input_buffer[input_len]='\0';
+            input_buffer[input_len] = '\0';
             print_str("\n> ");
 
-            if (str_equals(input_buffer,"help"))
-                print_str("Commands: game, print <text>, ls, mkdir <path>, touch <path>, write <path> <text>, cat <path>\n> ");
-            else if (str_equals(input_buffer,"game"))
+            if (str_equals(input_buffer, "help"))
+                print_str("Commands: game-starts game\n print <text>\n ls-list dir\n mkdir <path>\n touch <path>\n write <path>\n <text>\n cat <path>\n clear\n color <name>\n> ");
+            else if (str_equals(input_buffer, "game"))
                 game();
-            else if (starts_with(input_buffer,"print "))
+            else if (starts_with(input_buffer, "print "))
                 handle_print_command(input_buffer);
-            else if (starts_with(input_buffer,"ls")) {
-                const char *arg = input_buffer+2;
-                while(*arg==' ') arg++;
-                cmd_ls(arg);
-            }
-            else if (starts_with(input_buffer,"mkdir "))
-                cmd_mkdir(input_buffer+6);
-            else if (starts_with(input_buffer,"touch "))
-                cmd_touch(input_buffer+6);
-            else if (starts_with(input_buffer,"cat "))
-                cmd_cat(input_buffer+4);
-            else if (starts_with(input_buffer,"write "))
-                cmd_write(input_buffer+6);
-            else if (starts_with(input_buffer,"clear"))
+            else if (starts_with(input_buffer, "ls"))
+                cmd_ls(input_buffer + 2);
+            else if (starts_with(input_buffer, "mkdir "))
+                cmd_mkdir(input_buffer + 6);
+            else if (starts_with(input_buffer, "touch "))
+                cmd_touch(input_buffer + 6);
+            else if (starts_with(input_buffer, "cat "))
+                cmd_cat(input_buffer + 4);
+            else if (starts_with(input_buffer, "write "))
+                cmd_write(input_buffer + 6);
+            else if (starts_with(input_buffer, "clear"))
                 print_clear();
+            else if (starts_with(input_buffer, "color "))
+                handle_color_command(input_buffer);
+            else
+                print_str("Unknown command\n> ");
+
             input_len = 0;
-        } else if (input_len < INPUT_BUFFER_SIZE-1) {
+        } else if (input_len < INPUT_BUFFER_SIZE - 1) {
             input_buffer[input_len++] = c;
-            char str[2] = {c,'\0'};
+            char str[2] = {c, '\0'};
             print_str(str);
         }
     }
 }
-
 
 // ----------------- Kernel Entry -----------------
 void kernel_main() {
@@ -280,14 +284,14 @@ void kernel_main() {
     print_str("Type help for a list of commands");
 
     fs_init();
-    fs_write("/README.txt","Welcome to LumenOS FS. Try: ls /, cat /README.txt",54);
+    fs_write("/README.txt", "Welcome to LumenOS FS. Try: ls /, cat /README.txt", 54);
 
     idt_init();
     pic_init();
     __asm__ volatile("sti");
 
     print_str("\n> ");
-    while(1) {
+    while (1) {
         keyboard_poll();
         delay_ms(100);
     }
