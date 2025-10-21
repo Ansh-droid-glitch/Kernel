@@ -10,6 +10,11 @@ Steps to build Lumen:
 
 If you are using docker like me then the steps are different
 
+> [!WARNING]
+> This action is irreversible and may lead to data loss.
+> Proceed with caution.
+> Any damages caused to you device will not be taken by us.
+
 Startup Screen:
 
 ![After Booting Screen](images/boot.png)
