@@ -11,3 +11,5 @@ Steps to build Lumen:
 If you are using docker like me then the steps are different
 
 ![After Booting Screen](images/boot.png)
+
+![Games Screen](images/game.png)
