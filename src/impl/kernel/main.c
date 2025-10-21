@@ -1,7 +1,8 @@
-#include "print.h"
-#include "idt.h"
-#include <stdint.h>
+#include "../../intf/print.h"
+#include "../../intf/idt.h"
+#include "../../intf/fs.h"
 #include "../../intf/keyboard.h"
+#include <stdint.h>
 
 #define INPUT_BUFFER_SIZE 128
 
@@ -144,8 +145,67 @@ void handle_print_command(const char *input) {
     print_str("\n> ");
 }
 
+static void ls_print_cb(const char *name, fs_node_type_t type, void *user) {
+    (void)user;
+    if (type == FS_NODE_DIR) {
+        print_str("[DIR] ");
+    } else {
+        print_str("[FILE] ");
+    }
+    print_str(name);
+    print_str("\n");
+}
 
+static void cmd_ls(const char *arg) {
+    const char *path = (*arg) ? arg : "/";
+    if (fs_ls(path, ls_print_cb, 0) < 0) {
+        print_str("ls: not found\n");
+    }
+}
 
+static void cmd_mkdir(const char *path) {
+    if (!*path) { print_str("mkdir: path required\n"); return; }
+    if (fs_mkdir(path) < 0) {
+        print_str("mkdir: failed\n");
+    }
+}
+
+static void cmd_touch(const char *path) {
+    if (!*path) { print_str("touch: path required\n"); return; }
+    if (fs_touch(path) < 0) {
+        print_str("touch: failed\n");
+    }
+}
+
+static void cmd_cat(const char *path) {
+    if (!*path) { print_str("cat: path required\n"); return; }
+    char buf[512];
+    int n = fs_read(path, buf, sizeof(buf) - 1);
+    if (n < 0) { print_str("cat: failed\n"); return; }
+    buf[n] = '\0';
+    print_str(buf);
+    print_str("\n");
+}
+
+static void cmd_write(const char *args) {
+    // args: <path> <text>
+    // find first space
+    const char *p = args;
+    while (*p && *p != ' ') p++;
+    if (!*p) { print_str("write: usage write <path> <text>\n"); return; }
+    // path is args[0..p)
+    char path[64];
+    size_t i = 0;
+    for (const char *q = args; q < p && i + 1 < sizeof(path); q++, i++) path[i] = *q;
+    path[i] = '\0';
+    // skip spaces
+    while (*p == ' ') p++;
+    const char *text = p;
+    size_t len = 0; while (text[len]) len++;
+    if (fs_write(path, text, len) < 0) {
+        print_str("write: failed\n");
+    }
+}
 
 void keyboard_poll(void) {
     static char input_buffer[INPUT_BUFFER_SIZE];
@@ -161,11 +221,28 @@ void keyboard_poll(void) {
                 print_str("\n> ");
                 if (str_equals(input_buffer, "help")) {
                     print_str("game - starts the game menu\n");
-                    print_str("print <text> - prints the text\n>");
+                    print_str("print <text> - prints the text\n");
+                    print_str("ls [path] - list directory or file\n");
+                    print_str("mkdir <path> - create directory\n");
+                    print_str("touch <path> - create empty file\n");
+                    print_str("write <path> <text> - write file\n");
+                    print_str("cat <path> - print file contents\n>");
                 } else if (str_equals(input_buffer, "game")) {
                     game();
                 } else if (starts_with(input_buffer, "print ")) {
                     handle_print_command(input_buffer);
+                } else if (starts_with(input_buffer, "ls")) {
+                    const char *arg = input_buffer + 2;
+                    while (*arg == ' ') arg++;
+                    cmd_ls(arg);
+                } else if (starts_with(input_buffer, "mkdir ")) {
+                    cmd_mkdir(input_buffer + 6);
+                } else if (starts_with(input_buffer, "touch ")) {
+                    cmd_touch(input_buffer + 6);
+                } else if (starts_with(input_buffer, "cat ")) {
+                    cmd_cat(input_buffer + 4);
+                } else if (starts_with(input_buffer, "write ")) {
+                    fs_write(input_buffer + 6);
                 }
                 input_len = 0;
             } 
@@ -195,6 +272,9 @@ void kernel_main() {
     print_str("Welcome to Beacon OS 64-bit\n");
     print_set_color(PRINT_COLOR_CYAN, PRINT_COLOR_BLACK);
     print_str("Type help for a list of commands");
+    fs_init();
+    // Seed FS with a README
+    fs_write("/README.txt", "Welcome to BeaconOS FS. Try: ls /, cat /README.txt", 54);
     idt_init();
     pic_init();
     __asm__ volatile ("sti");
