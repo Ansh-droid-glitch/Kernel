@@ -243,26 +243,46 @@ void keyboard_poll(void) {
             input_buffer[input_len] = '\0';
             print_str("\n> ");
 
-            if (str_equals(input_buffer, "help"))
+            if (str_equals(input_buffer, "help")){
                 print_str("Commands: game-starts game\n print <text>\n ls-list dir\n mkdir <path>\n touch <path>\n write <path>\n <text>\n cat <path>\n clear\n color <name>\n> ");
-            else if (str_equals(input_buffer, "game"))
+            }
+            else if (str_equals(input_buffer, "game")){
                 game();
-            else if (starts_with(input_buffer, "print "))
+                print_str("\n>");
+            }
+            else if (starts_with(input_buffer, "print ")){
                 handle_print_command(input_buffer);
-            else if (starts_with(input_buffer, "ls"))
+                print_str("\n>");
+            }
+            else if (starts_with(input_buffer, "ls")){
                 cmd_ls(input_buffer + 2);
-            else if (starts_with(input_buffer, "mkdir "))
+                print_str("\n>");
+            }
+            else if (starts_with(input_buffer, "mkdir ")){
                 cmd_mkdir(input_buffer + 6);
-            else if (starts_with(input_buffer, "touch "))
+                print_str("\n>");
+            }
+            else if (starts_with(input_buffer, "touch ")){
                 cmd_touch(input_buffer + 6);
-            else if (starts_with(input_buffer, "cat "))
-                cmd_cat(input_buffer + 4);
-            else if (starts_with(input_buffer, "write "))
+                print_str("\n>");
+            }
+            else if (starts_with(input_buffer, "cat ")){
+              cmd_cat(input_buffer + 4);
+              print_str("\n>");
+            }
+            else if (starts_with(input_buffer, "write ")){
                 cmd_write(input_buffer + 6);
-            else if (starts_with(input_buffer, "clear"))
+                print_str("\n>");
+            }
+            else if (starts_with(input_buffer, "clear")){
                 print_clear();
-            else if (starts_with(input_buffer, "color "))
+                print_str(">");
+            }
+
+            else if (starts_with(input_buffer, "color ")){
                 handle_color_command(input_buffer);
+                print_str("\n>");
+            }
             else
                 print_str("Unknown command\n> ");
 
