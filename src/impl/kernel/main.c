@@ -1,6 +1,7 @@
 #include "../../intf/print.h"
 #include "../../intf/idt.h"
 #include "../../intf/fs.h"
+#include "../../intf/disk.h"
 #include "../../intf/keyboard.h"
 #include <stdint.h>
 
@@ -183,8 +184,11 @@ static void ls_print_cb(const char *name, fs_node_type_t type, void *user) {
 }
 
 static void cmd_ls(const char *arg) {
-    const char *path = (*arg) ? arg : "/";
-    if (fs_ls(path, ls_print_cb, 0) < 0) print_str("ls: not found\n");
+    void cmd_ls(const char *path) {
+    if (!path || !*path) path = "/";
+    fs_ls(path); // new simplified call
+}
+
 }
 
 static void cmd_mkdir(const char *path) {
@@ -201,7 +205,7 @@ static void cmd_cat(const char *path) {
     if (!*path) print_str("cat: path required\n");
     else {
         char buf[512];
-        int n = fs_read(path, buf, sizeof(buf)-1);
+        int n = fs_read(path, buf, sizeof(buf));
         if (n < 0) print_str("cat: failed\n");
         else {
             buf[n] = '\0';
@@ -244,7 +248,7 @@ void keyboard_poll(void) {
             print_str("\n> ");
 
             if (str_equals(input_buffer, "help")){
-                print_str("Commands: game-starts game\n print <text>\n ls-list dir\n mkdir <path>\n touch <path>\n write <path>\n <text>\n cat <path>\n clear\n color <name>\n> ");
+                print_str("Commands: game - starts game\n print <text>\n ls - list dir\n mkdir <path>\n touch <path>\n write <path> <text>\n cat <path>\n clear\n color <name>\n> ");
             }
             else if (str_equals(input_buffer, "game")){
                 game();
@@ -303,7 +307,12 @@ void kernel_main() {
     print_set_color(PRINT_COLOR_CYAN, PRINT_COLOR_BLACK);
     print_str("Type help for a list of commands");
 
+    // initialize disk (if your disk layer has an init function uncomment it)
+    // disk_init();
+
     fs_init();
+
+    // If fs_write writes to a real FAT32 implementation this will create/overwrite README
     fs_write("/README.txt", "Welcome to LumenOS FS. Try: ls /, cat /README.txt", 54);
 
     idt_init();

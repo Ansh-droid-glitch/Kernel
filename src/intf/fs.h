@@ -14,7 +14,7 @@ FS_NODE_DIR = 1,
 
 
 void fs_init(void);
-int fs_ls(const char *path, void (*cb)(const char*, fs_node_type_t, void*), void *user);
+void fs_ls(const char *path);
 int fs_mkdir(const char *path);
 int fs_touch(const char *path);
 int fs_write(const char *path, const char *data, size_t len);
